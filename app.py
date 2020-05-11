@@ -18,8 +18,6 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
-    session.clear()
-
     if request.method == "POST":
 
         connection = sqlite3.connect('database.db')
@@ -64,9 +62,9 @@ def register():
         else:
             hashed = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16)
             db.execute("INSERT INTO users (username, email, hash) VALUES (?, ?, ?)", (username, email, hashed,))
+            user = db.execute("SELECT id FROM users WHERE username = (?)", (username,)).fetchone()
+            session["user_id"] = user[0]
             connection.commit()
-            for row in db.execute("SELECT * FROM users"):
-                print(row)
             connection.close()
             return redirect("/")
     else:
@@ -74,5 +72,8 @@ def register():
 
 @app.route("/profile")
 def profile():
-    username = session["username"]
+    connection = sqlite3.connect('database.db')
+    db = connection.cursor()
+    username = db.execute("SELECT username FROM users WHERE id=(?)", (session["user_id"],)).fetchone()[0] # gets country's name from db
+    connection.commit()
     return render_template("profile.html", username=username)
