@@ -2,7 +2,7 @@ from flask import Flask, render_template, session, request, redirect
 from flask_session import Session
 from tempfile import mkdtemp
 import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
+import bcrypt
 app = Flask(__name__)
 
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -31,11 +31,12 @@ def login():
         user = db.execute("SELECT * FROM users WHERE username = (?)", (username,)).fetchone()
         connection.close()
 
-        if user is not None and check_password_hash(user[3], password):
+        password_hash = user[3]
+
+        if user is not None and bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8")):
             session["user_id"] = user[0]
-            session["username"] = user[1]
-            print('User has succesfully logged in.')
             return redirect("/")
+
         return redirect("/") # Change to actual error
     else:
         return render_template("login.html")
@@ -49,20 +50,25 @@ def register():
 
         username = request.form.get("username")
         email = request.form.get("email")
-        password = request.form.get("password")
-        confirmation = request.form.get("confirmation")
+
+        password = request.form.get("password").encode("utf-8")
+        confirmation = request.form.get("confirmation").encode("utf-8")
+
         if not confirmation or not password or not email or not username:
             return redirect("/") # Change to actual error
         elif password != confirmation:
             return redirect("/") # Change to actual error
         else:
-            hashed = generate_password_hash(password, method='pbkdf2:sha256', salt_length=16) # Hashes and salts the password
-            db.execute("INSERT INTO users (username, email, hash) VALUES (?, ?, ?)", (username, email, hashed,))
-            user = db.execute("SELECT id FROM users WHERE username = (?)", (username,)).fetchone()
-            session["user_id"] = user[0]
+
+            hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8") # Hashes and salts the password
+            db.execute("INSERT INTO users (username, email, hash) VALUES (?, ?, ?)", (username, email, hashed,)) # Inserts into db
+
+            user = db.execute("SELECT id FROM users WHERE username = (?)", (username,)).fetchone()[0]
 
             connection.commit()
             connection.close()
+
+            session["user_id"] = user
 
             return redirect("/")
     else:
