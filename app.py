@@ -38,14 +38,19 @@ def login():
         if not username or not password:
             return redirect("/") # Change to actual error
 
-        db.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = db.fetchone()
+        try:
+            db.execute("SELECT id FROM users WHERE username = %s", (username,))
+            user_id = db.fetchone()[0]
+        except TypeError:
+            return redirect("/") # Change to actual error
+
+        db.execute("SELECT hash FROM users WHERE username = %s", (username,))
+        password_hash = db.fetchone()[0]
+
         conn.close()
 
-        password_hash = user[3]
-
-        if user is not None and bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8")):
-            session["user_id"] = user[0]
+        if bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8")): # If the password hash matches
+            session["user_id"] = user_id
             return redirect("/")
 
         return redirect("/") # Change to actual error
@@ -73,22 +78,22 @@ def register():
 
         if not confirmation or not password or not email or not username:
             return redirect("/") # Change to actual error
+
         elif password != confirmation:
             return redirect("/") # Change to actual error
-        else:
 
-            hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8") # Hashes and salts the password
-            db.execute("INSERT INTO users (username, email, hash) VALUES (%s, %s, %s)", (username, email, hashed,)) # Inserts into db
+        hashed = bcrypt.hashpw(password, bcrypt.gensalt(14)).decode("utf-8") # Hashes and salts the password
+        db.execute("INSERT INTO users (username, email, hash) VALUES (%s, %s, %s)", (username, email, hashed,)) # Inserts into db
 
-            db.execute("SELECT id FROM users WHERE username = %s", (username,))
-            user_id = db.fetchone()[0]
-            
-            conn.commit()
-            conn.close()
+        db.execute("SELECT id FROM users WHERE username = %s", (username,))
+        user_id = db.fetchone()[0]
+        
+        conn.commit()
+        conn.close()
 
-            session["user_id"] = user_id
+        session["user_id"] = user_id
 
-            return redirect("/")
+        return redirect("/")
     else:
         return render_template("register.html")
 
@@ -108,7 +113,7 @@ def profile():
         db.execute("SELECT username FROM users WHERE id = %s", (session["user_id"],)) # Get's username from DB
         username = db.fetchone()[0]
     except:
-        return redirect("/")
+        return redirect("/") # Change to actual error
 
     conn.close()
 
