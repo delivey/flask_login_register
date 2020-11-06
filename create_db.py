@@ -15,7 +15,7 @@ db = conn.cursor()
 db.execute( # Creates the 'users' table
 """
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY NOT NULL,
+    id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(30) NOT NULL,
     email VARCHAR(100) NOT NULL,
     hash VARCHAR(256) NOT NULL,
