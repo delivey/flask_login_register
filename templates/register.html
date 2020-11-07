@@ -5,11 +5,13 @@
 {% endblock %}
 
 {% block body%}
-<form action="/register" method="POST">  
-    <input autocomplete="off" name="username" placeholder="Username"/>
-    <input autocomplete="off" name="email" placeholder="Email"/>
-    <input autocomplete="off" type="password" name="password" placeholder="Password"/>
-    <input autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password"/>
-    <input value="Register" type="submit"/>
-</form>
+<div class="form">
+    <form action="/register" method="POST">  
+        <input class="input" autocomplete="off" name="username" placeholder="Username"/>
+        <input class="input" autocomplete="off" name="email" placeholder="Email"/>
+        <input class="input" autocomplete="off" type="password" name="password" placeholder="Password"/>
+        <input class="input" autocomplete="off" type="password" name="confirmation" placeholder="Confirm Password"/>
+        <input class="button btn btn-primary" value="Register" type="submit"/>
+    </form>
+</div>
 {% endblock %}
